@@ -1,14 +1,19 @@
 #include <Wire.h>
 #include <LSM303.h>
 #include <FastLED.h>
+#include <ButtonDebounce.h>
 
 #define NUM_LEDS 40
 #define DATA_PIN 7
 
 /*
     Modes:
+        0: change brightness
         1: Rotation=hue, step=complementary color
-        2:
+        2: Stepping effect: step=color which fades after some time
+        3: select hue with potentiometer, step=complementary color
+        4: step=changes between red and blue
+        5: color wheel
 
 */
 
@@ -16,7 +21,6 @@
 CRGB leds[NUM_LEDS];
 
 LSM303 sensor1;
-
 char report[80];
 
 int last_ax = 0;
@@ -32,9 +36,11 @@ long last_change = 0;
 byte brightness = 42;
 byte hue = 0;
 byte hue_analog = 0;
-byte current_mode = 5;
+byte current_mode = 1;
+byte num_modes = 6;
 byte mode5_currindex = 0;
 byte mode5_hue = 0;
+byte mode1_lastrotation = 0;
 
 bool temp_color = false;
 bool mode3_temp = false;
@@ -42,8 +48,11 @@ bool mode4_temp = false;
 
 
 
+
 void printReport();
 void step();
+void buttonPressed(const int state);
+void nextMode();
 
 void setup()
 {
@@ -54,6 +63,10 @@ void setup()
 
     FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
     FastLED.setBrightness(42);
+
+
+    pinMode(3, INPUT);
+
 
     Serial.println("Werner Findenig");
 }
@@ -113,8 +126,13 @@ void loop()
     {
         
         /* Rotation */
-        hue = map(sensor1.m.y, -260, 60, 0, 255);
-        
+        int rot = map(sensor1.m.y, -260, 60, 0, 255);
+
+
+        hue +-mode1_lastrotation - rot;
+        hue %= 256;
+        mode1_lastrotation = rot;
+
         if(temp_color)
         {
             for(int i = 0; i < NUM_LEDS; i++)
@@ -163,7 +181,7 @@ void loop()
             leds[i].nscale8(240);
         }
     }
-    else if(current_mode == 6)
+    else if(current_mode == 0)
     {
         for(int i = 0; i < NUM_LEDS; i++)
         {
@@ -177,6 +195,14 @@ void loop()
     }
 
     FastLED.show();
+    
+    pinMode(3, INPUT);
+    
+    if(digitalRead(3))
+    {
+        nextMode();
+    }
+
     delay(10);
 }
 
@@ -247,4 +273,11 @@ void step()
             last_change = millis();
         }
     }
+}
+
+void nextMode()
+{
+    current_mode++;
+    current_mode %= num_modes;
+    Serial.println("Changed Mode");
 }
