@@ -17,7 +17,6 @@
 
 */
 
-
 CRGB leds[NUM_LEDS];
 
 LSM303 sensor1;
@@ -30,14 +29,17 @@ int last_az = 0;
 int threshhold_a = 10000;
 int threshhold_time = 130;
 
+int hue = 0;
+int mode6_delay = 60;
 
+long last_btn_change = 0;
 long last_change = 0;
+long mode6_lastchange = 0;
 
 byte brightness = 42;
-byte hue = 0;
 byte hue_analog = 0;
 byte current_mode = 1;
-byte num_modes = 6;
+byte num_modes = 7;
 byte mode5_currindex = 0;
 byte mode5_hue = 0;
 byte mode1_lastrotation = 0;
@@ -45,8 +47,7 @@ byte mode1_lastrotation = 0;
 bool temp_color = false;
 bool mode3_temp = false;
 bool mode4_temp = false;
-
-
+bool mode6_on = true;
 
 
 void printReport();
@@ -63,7 +64,6 @@ void setup()
 
     FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
     FastLED.setBrightness(42);
-
 
     pinMode(3, INPUT);
 
@@ -125,13 +125,23 @@ void loop()
     if(current_mode == 1)
     {
         
+
+        hue = map(sensor1.m.y, -260, 60, 0, 255);
         /* Rotation */
-        int rot = map(sensor1.m.y, -260, 60, 0, 255);
+        /*int rot = map(sensor1.m.y, -260, 60, 0, 255);
 
+            mode1_lastrotation = rot;
 
-        hue +-mode1_lastrotation - rot;
-        hue %= 256;
-        mode1_lastrotation = rot;
+        int rotdiff = mode1_lastrotation - rot;
+        if(rotdiff > 10)
+        {
+            Serial.println(rotdiff);
+
+            hue += rotdiff / 8;
+            hue %= 256;
+        }
+
+        */
 
         if(temp_color)
         {
@@ -193,10 +203,32 @@ void loop()
             FastLED.setBrightness(brightness);
         }
     }
+    else if(current_mode == 6)
+    {
+        if(millis() - mode6_lastchange > mode6_delay)
+        {
+            mode6_on = !mode6_on;
+            if(mode6_on)
+            {
+                for(int i = 0; i < NUM_LEDS; i++)
+                {
+                    leds[i] = CRGB(255, 255, 255);
+                }
+            }
+            else
+            {
+                for(int i = 0; i < NUM_LEDS; i++)
+                {
+                    leds[i] = CRGB(0, 0, 0);
+                }
+            }
+            mode6_lastchange = millis();
+            //mode6_delay = map(analogRead(A0), 200, 800, 30, 400);
+        }
+    }
 
     FastLED.show();
     
-    pinMode(3, INPUT);
     
     if(digitalRead(3))
     {
@@ -277,7 +309,12 @@ void step()
 
 void nextMode()
 {
-    current_mode++;
-    current_mode %= num_modes;
-    Serial.println("Changed Mode");
+    if(millis() - last_btn_change > 500)
+    {
+        current_mode++;
+        current_mode %= num_modes;
+        Serial.println("Changed Mode");
+        step();
+        last_btn_change = millis();
+    }
 }
