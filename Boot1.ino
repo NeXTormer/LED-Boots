@@ -1,9 +1,10 @@
+
 #include <Wire.h>
 #include <LSM303.h>
 #include <FastLED.h>
 #include <ButtonDebounce.h>
 
-#define NUM_LEDS 40
+#define NUM_LEDS 43
 #define DATA_PIN 7
 
 /*
@@ -62,11 +63,11 @@ void setup()
     sensor1.init();
     sensor1.enableDefault();
 
-    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+    FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
     FastLED.setBrightness(42);
 
-    pinMode(3, INPUT);
-
+    pinMode(3, INPUT_PULLUP);
+    pinMode(4, INPUT_PULLUP);
 
     Serial.println("Werner Findenig");
 }
@@ -86,7 +87,7 @@ void loop()
     int dy = abs(y - last_ay);
     int dz = abs(z - last_az);
 
-    hue_analog = map(analogRead(A7), 40, 800, 0,255);
+    hue_analog = map(analogRead(A0), 40, 800, 0,255);
     //Serial.println(analogRead(A0));
 
     if((x <= 0 && last_ax > 0) || (last_ax <= 0 && x > 0))
@@ -196,7 +197,7 @@ void loop()
         for(int i = 0; i < NUM_LEDS; i++)
         {
             leds[i] = CRGB(255, 255, 255);
-            int analog = analogRead(A7);
+            int analog = analogRead(A0);
             if(analog > 500) analog = 500;
             if(analog < 60) analog = 60;
             brightness = analog;
@@ -228,12 +229,14 @@ void loop()
     }
 
     FastLED.show();
+
     
-    
-    if(digitalRead(3))
+    if(!digitalRead(3))
     {
         nextMode();
     }
+
+    Serial.println(analogRead(A0));
 
     delay(10);
 }
@@ -317,4 +320,14 @@ void nextMode()
         step();
         last_btn_change = millis();
     }
+}
+
+
+void printReport()
+{
+  Serial.println("REPORT");
+  snprintf(report, sizeof(report), "A: %6d %6d %6d    M: %6d %6d %6d",
+    sensor1.a.x, sensor1.a.y, sensor1.a.z,
+    sensor1.m.x, sensor1.m.y, sensor1.m.z);
+  
 }
