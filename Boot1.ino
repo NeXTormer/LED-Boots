@@ -46,8 +46,6 @@ bool mode3_temp = false;
 bool mode4_temp = false;
 bool mode6_on = true;
 
-
-void printReport();
 void step();
 void buttonPressed(const int state);
 void nextMode();
@@ -67,9 +65,6 @@ void setup()
 
 void loop()
 {
-    //int x = sensor1.a.x;
-    //int y = sensor1.a.y;
-    //int z = sensor1.a.z;
     int x = analogRead(A1);
     int y = analogRead(A2);
     int z = analogRead(A3);
@@ -213,8 +208,6 @@ void loop()
         nextMode();
     }
 
-    Serial.println(analogRead(A0));
-
     delay(10);
 }
 
@@ -297,14 +290,4 @@ void nextMode()
         step();
         last_btn_change = millis();
     }
-}
-
-
-void printReport()
-{
-  Serial.println("REPORT");
-  snprintf(report, sizeof(report), "A: %6d %6d %6d    M: %6d %6d %6d",
-    sensor1.a.x, sensor1.a.y, sensor1.a.z,
-    sensor1.m.x, sensor1.m.y, sensor1.m.z);
-  
 }
