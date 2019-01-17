@@ -1,8 +1,6 @@
 
 #include <Wire.h>
-#include <LSM303.h>
 #include <FastLED.h>
-#include <ButtonDebounce.h>
 
 #define NUM_LEDS 43
 #define DATA_PIN 7
@@ -20,14 +18,12 @@
 
 CRGB leds[NUM_LEDS];
 
-LSM303 sensor1;
-char report[80];
 
 int last_ax = 0;
 int last_ay = 0;
 int last_az = 0;
 
-int threshhold_a = 10000;
+int threshhold_a = 500;
 int threshhold_time = 130;
 
 int hue = 0;
@@ -59,27 +55,24 @@ void nextMode();
 void setup()
 {
     Serial.begin(115200);
-    Wire.begin();
-    sensor1.init();
-    sensor1.enableDefault();
-
-    FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
+   
+    FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
     FastLED.setBrightness(42);
 
     pinMode(3, INPUT_PULLUP);
     pinMode(4, INPUT_PULLUP);
-
+    
     Serial.println("Werner Findenig");
 }
 
 void loop()
 {
-    sensor1.read();
-    //printReport();
-
-    int x = sensor1.a.x;
-    int y = sensor1.a.y;
-    int z = sensor1.a.z;
+    //int x = sensor1.a.x;
+    //int y = sensor1.a.y;
+    //int z = sensor1.a.z;
+    int x = analogRead(A1);
+    int y = analogRead(A2);
+    int z = analogRead(A3);
 
     /* Detect change in direction */
 
@@ -87,8 +80,8 @@ void loop()
     int dy = abs(y - last_ay);
     int dz = abs(z - last_az);
 
-    hue_analog = map(analogRead(A0), 40, 800, 0,255);
-    //Serial.println(analogRead(A0));
+    hue_analog = map(analogRead(A5), 40, 800, 0,255);
+    //Serial.println(analogRead(A5));
 
     if((x <= 0 && last_ax > 0) || (last_ax <= 0 && x > 0))
     {
@@ -125,25 +118,9 @@ void loop()
 
     if(current_mode == 1)
     {
+        hue++;
+        hue %= 255;
         
-
-        hue = map(sensor1.m.y, -260, 60, 0, 255);
-        /* Rotation */
-        /*int rot = map(sensor1.m.y, -260, 60, 0, 255);
-
-            mode1_lastrotation = rot;
-
-        int rotdiff = mode1_lastrotation - rot;
-        if(rotdiff > 10)
-        {
-            Serial.println(rotdiff);
-
-            hue += rotdiff / 8;
-            hue %= 256;
-        }
-
-        */
-
         if(temp_color)
         {
             for(int i = 0; i < NUM_LEDS; i++)
@@ -231,7 +208,7 @@ void loop()
     FastLED.show();
 
     
-    if(!digitalRead(3))
+    if(digitalRead(3))
     {
         nextMode();
     }
