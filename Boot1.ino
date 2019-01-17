@@ -6,6 +6,7 @@
 
 #define NUM_LEDS 43
 #define DATA_PIN 7
+#define POTI_PIN A7
 
 /*
     Modes:
@@ -87,8 +88,8 @@ void loop()
     int dy = abs(y - last_ay);
     int dz = abs(z - last_az);
 
-    hue_analog = map(analogRead(A0), 40, 800, 0,255);
-    //Serial.println(analogRead(A0));
+    hue_analog = map(analogRead(POTI_PIN), 40, 800, 0,255);
+    //Serial.println(analogRead(POTI_PIN));
 
     if((x <= 0 && last_ax > 0) || (last_ax <= 0 && x > 0))
     {
@@ -197,7 +198,7 @@ void loop()
         for(int i = 0; i < NUM_LEDS; i++)
         {
             leds[i] = CRGB(255, 255, 255);
-            int analog = analogRead(A0);
+            int analog = analogRead(POTI_PIN);
             if(analog > 500) analog = 500;
             if(analog < 60) analog = 60;
             brightness = analog;
@@ -224,19 +225,19 @@ void loop()
                 }
             }
             mode6_lastchange = millis();
-            //mode6_delay = map(analogRead(A0), 200, 800, 30, 400);
+            //mode6_delay = map(analogRead(POTI_PIN), 200, 800, 30, 400);
         }
     }
 
     FastLED.show();
 
     
-    if(!digitalRead(3))
+    if(digitalRead(3))
     {
         nextMode();
     }
 
-    Serial.println(analogRead(A0));
+    Serial.println(analogRead(POTI_PIN));
 
     delay(10);
 }
