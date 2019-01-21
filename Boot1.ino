@@ -231,7 +231,7 @@ void loop()
     FastLED.show();
 
     
-    if(!digitalRead(3))
+    if(!digitalRead(4))
     {
         nextMode();
     }
